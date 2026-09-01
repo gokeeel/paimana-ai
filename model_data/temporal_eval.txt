@@ -1,0 +1,89 @@
+TEMPORAL HOLDOUT EVALUATION -- train report_month <= 2024-12 (2642 rows), test > 2024-12 (2569 rows)
+Train months: ['2024-07', '2024-08', '2024-10', '2024-11', '2024-12']
+Test months:  ['2025-01', '2025-03', '2025-07']
+
+--- TIME: y_slippage_flag --- (test n=2569, base rate=56.1%)
+  HistGradientBoosting   ROC-AUC=0.837 (95% CI 0.821-0.852)  PR-AUC=0.868  P@10%=0.973  R@10%=0.173  TP=985 FP=195 FN=457 TN=932
+  Logistic Regression    ROC-AUC=0.720 (95% CI 0.700-0.738)  PR-AUC=0.730  P@10%=0.762  R@10%=0.135  TP=866 FP=326 FN=576 TN=801
+  Heuristic (is_past_orig_doc) ROC-AUC=0.605 (95% CI 0.584-0.625)  PR-AUC=0.624  P@10%=0.781  R@10%=0.139  TP=780 FP=373 FN=662 TN=754
+
+  By sector (HGB model, min 20 rows, both classes present):
+    Aviation & Aviation Infrastructure n=  23  ROC-AUC=0.622  P@10%=1.000
+    CIVIL AVIATION                 n= 119  ROC-AUC=0.970  P@10%=1.000
+    COAL                           n=  70  ROC-AUC=0.922  P@10%=1.000
+    Coal                           n= 107  ROC-AUC=0.853  P@10%=0.300
+    DEPARTMENT OF HIGHER EDUCATION n=  35  ROC-AUC=0.872  P@10%=1.000
+    DPIIT                          n=  27  ROC-AUC=1.000  P@10%=1.000
+    Education                      n=  26  ROC-AUC=0.774  P@10%=1.000
+    Electricity Generation         n=  28  ROC-AUC=0.646  P@10%=0.500
+    HEALTH AND FAMILY WELFARE      n=  52  ROC-AUC=0.926  P@10%=1.000
+    MINES                          n=  20  ROC-AUC=0.945  P@10%=1.000
+    Oil & Gas                      n= 197  ROC-AUC=0.669  P@10%=0.684
+    PETROLEUM                      n= 163  ROC-AUC=0.915  P@10%=1.000
+    POWER                          n= 397  ROC-AUC=0.797  P@10%=1.000
+    RAILWAYS                       n= 399  ROC-AUC=0.791  P@10%=0.949
+    ROAD TRANSPORT AND HIGHWAYS    n= 664  ROC-AUC=0.876  P@10%=0.985
+    STEEL                          n=  20  ROC-AUC=0.929  P@10%=1.000
+    Telecommunication              n=  25  ROC-AUC=0.631  P@10%=1.000
+    Transmission & Distribution    n=  42  ROC-AUC=0.909  P@10%=1.000
+    URBAN DEVELOPMENT              n=  82  ROC-AUC=0.990  P@10%=1.000
+
+  By ministry (HGB model, min 20 rows, both classes present):
+    Department of Higher Education n=  36  ROC-AUC=0.868  P@10%=1.000
+    Department of Telecommunications n=  32  ROC-AUC=0.723  P@10%=1.000
+    Ministry of Civil Aviation     n=  65  ROC-AUC=0.915  P@10%=1.000
+    Ministry of Coal               n= 318  ROC-AUC=0.935  P@10%=0.968
+    Ministry of Housing & Urban Affairs n=  55  ROC-AUC=0.931  P@10%=1.000
+    Ministry of Petroleum & Natural Gas n= 627  ROC-AUC=0.906  P@10%=1.000
+    Ministry of Power              n= 179  ROC-AUC=0.819  P@10%=1.000
+    Ministry of Railways           n=  29  ROC-AUC=0.911  P@10%=1.000
+    Ministry of Road Transport & Highways n=1147  ROC-AUC=0.792  P@10%=0.974
+    Ministry of Steel              n=  40  ROC-AUC=0.777  P@10%=1.000
+
+--- COST: y_cost_overrun_flag --- (test n=2569, base rate=29.0%)
+  HistGradientBoosting   ROC-AUC=0.928 (95% CI 0.917-0.939)  PR-AUC=0.851  P@10%=0.941  R@10%=0.323  TP=585 FP=174 FN=161 TN=1649
+  Logistic Regression    ROC-AUC=0.758 (95% CI 0.737-0.777)  PR-AUC=0.528  P@10%=0.668  R@10%=0.229  TP=291 FP=230 FN=455 TN=1593
+  Heuristic (is_past_orig_doc) ROC-AUC=0.618 (95% CI 0.600-0.639)  PR-AUC=0.357  P@10%=0.246  R@10%=0.084  TP=460 FP=693 FN=286 TN=1130
+
+  By sector (HGB model, min 20 rows, both classes present):
+    Aviation & Aviation Infrastructure n=  23  ROC-AUC=0.929  P@10%=0.500
+    CIVIL AVIATION                 n= 119  ROC-AUC=0.993  P@10%=0.909
+    COAL                           n=  70  ROC-AUC=1.000  P@10%=0.429
+    DEPARTMENT OF HIGHER EDUCATION n=  35  ROC-AUC=1.000  P@10%=1.000
+    DPIIT                          n=  27  ROC-AUC=1.000  P@10%=1.000
+    Education                      n=  26  ROC-AUC=0.507  P@10%=0.500
+    Electricity Generation         n=  28  ROC-AUC=0.780  P@10%=0.500
+    HEALTH AND FAMILY WELFARE      n=  52  ROC-AUC=0.928  P@10%=1.000
+    MINES                          n=  20  ROC-AUC=1.000  P@10%=1.000
+    Oil & Gas                      n= 197  ROC-AUC=0.701  P@10%=0.684
+    PETROLEUM                      n= 163  ROC-AUC=0.982  P@10%=1.000
+    POWER                          n= 397  ROC-AUC=0.939  P@10%=0.974
+    RAILWAYS                       n= 399  ROC-AUC=0.951  P@10%=1.000
+    ROAD TRANSPORT AND HIGHWAYS    n= 664  ROC-AUC=0.946  P@10%=0.970
+    STEEL                          n=  20  ROC-AUC=0.984  P@10%=1.000
+    Transmission & Distribution    n=  42  ROC-AUC=0.812  P@10%=0.500
+    URBAN DEVELOPMENT              n=  82  ROC-AUC=0.887  P@10%=0.750
+
+  By ministry (HGB model, min 20 rows, both classes present):
+    Department of Higher Education n=  36  ROC-AUC=0.786  P@10%=0.667
+    Ministry of Civil Aviation     n=  65  ROC-AUC=0.978  P@10%=0.833
+    Ministry of Coal               n= 318  ROC-AUC=0.873  P@10%=0.129
+    Ministry of Housing & Urban Affairs n=  55  ROC-AUC=0.729  P@10%=0.400
+    Ministry of Petroleum & Natural Gas n= 627  ROC-AUC=0.928  P@10%=1.000
+    Ministry of Power              n= 179  ROC-AUC=0.929  P@10%=0.882
+    Ministry of Railways           n=  29  ROC-AUC=0.936  P@10%=1.000
+    Ministry of Road Transport & Highways n=1147  ROC-AUC=0.932  P@10%=0.965
+    Ministry of Steel              n=  40  ROC-AUC=0.949  P@10%=0.500
+
+
+=== LEAD TIME ANALYSIS ===
+(uses only the temporally-held-out model above, scored across each test-period
+ project's full monthly history -- never trained on the future it's evaluated against)
+
+  Lead time -- time (newly past original DoC): 216 projects with a pre-event alert in the holdout window
+    median=9.0mo  p25=6.0mo  p75=11.0mo  (positive = warned before the event)
+    reactive (<=0 months lead): 0/216
+
+  Lead time -- cost (revision newly exceeds 10%): 111 projects with a pre-event alert in the holdout window
+    median=11.0mo  p25=6.0mo  p75=11.0mo  (positive = warned before the event)
+    reactive (<=0 months lead): 0/111

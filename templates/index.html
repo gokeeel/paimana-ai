@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>PAIMANA Flash Report Extractor</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+    h1 { font-size: 1.3rem; }
+    input[type=file] { display: block; margin: 20px 0; }
+    button { padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    #status { margin-top: 16px; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>PAIMANA Flash Report Extractor</h1>
+  <p>Upload one or more flash report PDFs. You'll get back a ZIP with three CSVs: ongoing, completed, newly_added projects.</p>
+  <form id="form">
+    <input type="file" name="pdfs" id="pdfs" accept="application/pdf" multiple required>
+    <button type="submit">Extract &amp; Download</button>
+  </form>
+  <div id="status"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const files = document.getElementById('pdfs').files;
+      if (!files.length) return;
+
+      const data = new FormData();
+      for (const f of files) data.append('pdfs', f);
+
+      status.textContent = `Processing ${files.length} file(s)...`;
+      form.querySelector('button').disabled = true;
+
+      try {
+        const res = await fetch('/extract', { method: 'POST', body: data });
+        if (!res.ok) throw new Error(await res.text());
+        const disposition = res.headers.get('Content-Disposition') || '';
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        const filename = match ? match[1] : 'paimana_extracted.zip';
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        status.textContent = 'Done, download started.';
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+      } finally {
+        form.querySelector('button').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

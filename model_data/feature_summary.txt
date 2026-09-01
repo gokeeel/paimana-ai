@@ -1,0 +1,28 @@
+
+=== FEATURE GROUPS ===
+
+SANCTION-TIME (available at project approval — no leakage risk):
+  original_cost, log_original_cost, orig_duration_m, approval_to_start_lag_m,
+  sanction_year, cost_per_month_planned, ministry, sector, state, agency,
+  scope_km, kw_bridge, kw_tunnel, kw_bypass, kw_greenfield, kw_upgrade,
+  kw_epc, kw_ham, kw_bot, kw_doubling, kw_electrification, kw_metro,
+  kw_pipeline, kw_terminal
+
+PROGRESS (snapshot-time — allowed as features for forward prediction):
+  months_elapsed, elapsed_ratio, physical_progress, financial_progress_pct,
+  progress_gap_pct, months_past_orig_doc, is_past_orig_doc,
+  cost_revision_to_date_pct, doc_slip_to_date_m, d_physical_progress,
+  d_expenditure, progress_velocity_3m, is_stalled, snapshot_index
+
+LABELS (y_ prefix — NEVER use as features):
+  y_cost_overrun_total_pct, y_time_overrun_total_m,
+  y_new_cost_escalation_pct, y_new_slippage_m,
+  y_cost_overrun_flag, y_slippage_flag, y_time_band, y_cost_band
+
+LEAKAGE RULE:
+  latest_cost and revised_doc from the SAME month as the label are labels.
+  Never feed them into a model that predicts that month's outcome.
+
+SPLIT RULE:
+  GroupKFold on uid (not random). Same project must not appear in train AND test.
+  Time-based holdout: train on months ≤ T, test on months > T.

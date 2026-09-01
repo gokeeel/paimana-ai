@@ -1,0 +1,64 @@
+{
+  "report_month": "2026-07",
+  "total_projects": 1775,
+  "red": 459,
+  "amber": 650,
+  "green": 666,
+  "alerts": {
+    "rapidly_deteriorating": 47,
+    "newly_at_risk": 38,
+    "stalled_and_overdue": 53
+  },
+  "top_10_riskiest": [
+    {
+      "uid": "618544",
+      "project_name": "4L twin tube tunnel including approaches from Digdol to Khuni Nallah North Bound connecting with existing major bridge on NB and South Bound connecting with Tunnel T4 ,Single tube tunnel of Ramban to Banihal Pkg-II of Old NH-1A New NH-44",
+      "risk_score": 98.44213835317615
+    },
+    {
+      "uid": "618902",
+      "project_name": "Maheshkunt-Saharsa-Purnea Pkg I km 0.00 to km. 90.00 of NH-107",
+      "risk_score": 98.12931858954227
+    },
+    {
+      "uid": "619087",
+      "project_name": "Widening to 6L of Existing 4L Jetpur - Gondal - Rajkot Section from Km. 117.600 to Km. 185.00 on NH-27",
+      "risk_score": 98.10416837643608
+    },
+    {
+      "uid": "619003",
+      "project_name": "Solan - Kaithlighat Section of NH-22 Now NH-5 from Km. 106.139 to Km.129.05",
+      "risk_score": 98.03655251763185
+    },
+    {
+      "uid": "619152",
+      "project_name": "Bakhtiyarpur Km 153.300 to Mokama Km 197.900",
+      "risk_score": 97.9477548193417
+    },
+    {
+      "uid": "618955",
+      "project_name": "2L PS of Majhauli to Charout section from km. 0.00 to km. 63.655",
+      "risk_score": 97.44145878112366
+    },
+    {
+      "uid": "619134",
+      "project_name": "6L of Ambala-Chandigarh greenfield section from Km. 0.000 to Km. 25.000 with 4L spur to Lalru from Km. 0.000 to Km. 5.828 & spur to PR-7 road from Km. 0.000 to Km. 11.157",
+      "risk_score": 97.23113351021317
+    },
+    {
+      "uid": "619153",
+      "project_name": "4L of HP/Punjab Border - Mo from km. 11.00 to km. 42.00 of Old NH-20 New NH-154 Package-IA",
+      "risk_score": 97.15338041288526
+    },
+    {
+      "uid": "618921",
+      "project_name": "4L of Kathlighat to Shakral Village from Km 128.835 to Km 146.300 of NH- 5 Shimla Bypass - Pkg I",
+      "risk_score": 97.14823838744236
+    },
+    {
+      "uid": "618903",
+      "project_name": "Maheshkunt -Saharsa-Purnea Pkg II",
+      "risk_score": 97.01357608190052
+    }
+  ]
+}

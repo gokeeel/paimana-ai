@@ -1,0 +1,10 @@
+flask
+pdfplumber
+pandas
+numpy
+scikit-learn
+joblib
+shap
+streamlit
+plotly
+fpdf2
