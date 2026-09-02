@@ -123,30 +123,39 @@ def main():
     for _, r in combined_rank.head(10).iterrows():
         print(f"  {r.feature:28s} time={r.mean_abs_shap_time:.4f}  cost={r.mean_abs_shap_cost:.4f}")
 
-    # ── per-project top-5 drivers for the 50 riskiest ──
+    # ── per-project top-5 drivers for every project in the explained sample ──
+    # (not just the top-50 -- the wider set is what cluster_archetypes.py needs
+    # to find genuinely different failure patterns; the extreme top-50 alone
+    # mostly all look like "everything is bad" and don't cluster meaningfully)
     combined_shap = 0.5 * shap_time + 0.5 * shap_cost  # contribution to risk_score/100, since
     # risk_score = (0.5*slip_prob + 0.5*cost_prob)*100 and both models' shap values are already
     # in predict_proba space (additive by construction of the wrapper).
 
-    idx_pos = {uid_idx: pos for pos, uid_idx in enumerate(sample_idx)}
+    sample_uids = latest.loc[sample_idx, "uid"]
+    risk_by_uid = risk.set_index("uid")[["project_name", "risk_score"]]
+
     rows = []
-    for _, r in top50.iterrows():
-        row_idx = latest.index[latest.uid == r.uid]
-        if len(row_idx) == 0 or row_idx[0] not in idx_pos:
+    for pos, row_idx in enumerate(sample_idx):
+        uid = sample_uids.loc[row_idx]
+        if uid not in risk_by_uid.index:
             continue
-        pos = idx_pos[row_idx[0]]
         contrib = combined_shap[pos] * 100  # scale to risk_score points
         order = np.argsort(-np.abs(contrib))[:5]
-        rec = {"uid": r.uid, "project_name": r.project_name, "risk_score": r.risk_score}
+        rec = {"uid": uid, "project_name": risk_by_uid.loc[uid, "project_name"],
+               "risk_score": risk_by_uid.loc[uid, "risk_score"]}
         for i, j in enumerate(order, start=1):
             rec[f"driver_{i}_feature"] = features[j]
             rec[f"driver_{i}_shap"] = round(float(contrib[j]), 3)
         rows.append(rec)
 
-    top50_out = pd.DataFrame(rows)
+    sample_out = pd.DataFrame(rows)
+    sample_out.to_csv(os.path.join(args.outdir, "shap_sample.csv"), index=False)
+
+    top50_out = sample_out.nlargest(50, "risk_score")
     top50_out.to_csv(os.path.join(args.outdir, "shap_top50.csv"), index=False)
 
-    print(f"\nSaved shap_global.csv ({len(glob)} features) and "
+    print(f"\nSaved shap_global.csv ({len(glob)} features), "
+          f"shap_sample.csv ({len(sample_out)} projects), and "
           f"shap_top50.csv ({len(top50_out)} projects) to {args.outdir}")
 
 

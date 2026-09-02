@@ -1,0 +1,5 @@
+archetype_id,archetype_label,n_projects,avg_risk_score
+0,Cost already revised upward (%) + Time elapsed vs. planned duration + Original planned duration (months),70,42.5
+2,Time elapsed vs. planned duration + Financial progress (spend as % of sanctioned cost) + Months already slipped from original completion date,64,86.6
+1,Cost already revised upward (%) + Original planned duration (months) + Financial progress (spend as % of sanctioned cost),38,87.9
+3,Time elapsed vs. planned duration + Cost already revised upward (%) + Months already slipped from original completion date,28,18.0
