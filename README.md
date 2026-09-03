@@ -14,14 +14,14 @@ pip install -r requirements.txt
 Run from the project root. Each step reads the previous step's output.
 
 ```
-# 1. Extract raw tables from PDF flash reports (already done — ongoing.csv,
-#    completed.csv, newly_added.csv are already in this folder). Only rerun if
-#    you add new monthly PDFs: put them in your Downloads folder, add the
-#    filename to batch_all.py's FILES list, then:
-python batch_all.py
+# 1. Extract raw tables from PDF flash reports (already done — the CSVs
+#    live in data/raw/). Only rerun if you add new monthly PDFs: put them
+#    in your Downloads folder, add the filename to
+#    extraction/batch_all.py's FILES list, then:
+python extraction/batch_all.py
 
 # 2. Feature engineering + forward labels
-python build_panel.py --ongoing ongoing.csv --completed completed.csv --outdir model_data
+python build_panel.py --ongoing data/raw/ongoing.csv --completed data/raw/completed.csv --outdir model_data
 
 # 3. Train the 5 models (~1 min)
 python train_models.py --data model_data/train_forward.csv --outdir model_data

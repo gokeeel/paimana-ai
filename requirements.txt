@@ -9,3 +9,11 @@ streamlit
 plotly
 fpdf2
 openpyxl
+sqlalchemy
+psycopg2-binary
+alembic
+python-dotenv
+fastapi
+uvicorn[standard]
+pytest
+httpx

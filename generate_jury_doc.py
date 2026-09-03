@@ -111,7 +111,7 @@ def load_context(data_dir):
     temporal_text = open(temporal_path, encoding="utf-8").read() if os.path.exists(temporal_path) else ""
     panel = pd.read_csv(os.path.join(data_dir, "panel.csv"), low_memory=False, dtype={"uid": str})
     train_forward = pd.read_csv(os.path.join(data_dir, "train_forward.csv"), low_memory=False)
-    ongoing_path = "ongoing.csv"
+    ongoing_path = "data/raw/ongoing.csv"
     raw_rows = len(pd.read_csv(ongoing_path, low_memory=False)) if os.path.exists(ongoing_path) else None
     return summary, model_comp, shap_global, temporal_text, panel, train_forward, raw_rows
 

@@ -574,6 +574,8 @@ TABLE_FORMATS = {
     ],
 }
 
+TABLES = TABLE_FORMATS  # Alias for backward compatibility with debug_pdf.py
+
 
 def extract_table(pdf, table_key):
     settings = {"vertical_strategy": "lines", "horizontal_strategy": "lines"}
