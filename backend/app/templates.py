@@ -7,9 +7,21 @@ TIER_TO_STATUS = {"Green": "On Track", "Amber": "Needs Attention", "Red": "Criti
 
 NUMERIC_TEMPLATES = {
     "elapsed_ratio": lambda v: f"The project has used up {v * 100:.0f}% of its planned schedule.",
-    "doc_slip_to_date_m": lambda v: f"The completion date has already slipped by {v:.0f} months.",
-    "progress_gap_pct": lambda v: f"Physical progress is {v:.0f} percentage points behind financial progress.",
-    "cost_revision_to_date_pct": lambda v: f"The project cost has already been revised up by {v:.0f}%.",
+    "doc_slip_to_date_m": lambda v: (
+        f"The completion date has already slipped by {v:.0f} months."
+        if v >= 0
+        else f"The project is currently running {abs(v):.0f} months ahead of the original completion date."
+    ),
+    "progress_gap_pct": lambda v: (
+        f"Physical progress is {v:.0f} percentage points behind financial progress."
+        if v >= 0
+        else f"Physical progress is {abs(v):.0f} percentage points ahead of financial progress."
+    ),
+    "cost_revision_to_date_pct": lambda v: (
+        f"The project cost has already been revised up by {v:.0f}%."
+        if v >= 0
+        else f"The project cost has already been revised down by {abs(v):.0f}%."
+    ),
     "months_past_orig_doc": lambda v: f"The project is {v:.0f} months past its original completion date.",
     "physical_progress": lambda v: f"Physical progress stands at {v:.0f}%.",
     "financial_progress_pct": lambda v: f"{v:.0f}% of the sanctioned budget has been spent.",
