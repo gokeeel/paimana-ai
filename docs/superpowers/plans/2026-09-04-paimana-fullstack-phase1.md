@@ -993,12 +993,22 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from backend.app.database import get_db
 from backend.app.main import app
 from backend.app.models import Base
 
-engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+# StaticPool is required, not optional: FastAPI's TestClient runs sync endpoints
+# in a worker thread, and SQLAlchemy's default SingletonThreadPool gives each
+# thread its own private :memory: database -- without it, the endpoint's
+# get_db() session sees an empty DB even after the test fixture just populated
+# it. StaticPool forces every thread onto the one shared connection.
+engine = create_engine(
+    "sqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 TestingSessionLocal = sessionmaker(bind=engine)
 
 
