@@ -26,6 +26,8 @@ import pandas as pd
 import shap
 
 from feature_labels import build_X, combined_importance
+from ml.db import SessionLocal
+from backend.app import models
 
 SAMPLE_SIZE = 150   # additional random rows beyond the top-50, for "global" importance
 BACKGROUND_SIZE = 15
@@ -135,17 +137,29 @@ def main():
     risk_by_uid = risk.set_index("uid")[["project_name", "risk_score"]]
 
     rows = []
+    db_rows = []
     for pos, row_idx in enumerate(sample_idx):
         uid = sample_uids.loc[row_idx]
         if uid not in risk_by_uid.index:
             continue
         contrib = combined_shap[pos] * 100  # scale to risk_score points
         order = np.argsort(-np.abs(contrib))[:5]
+        report_month = latest.loc[row_idx, "report_month"]
         rec = {"uid": uid, "project_name": risk_by_uid.loc[uid, "project_name"],
                "risk_score": risk_by_uid.loc[uid, "risk_score"]}
-        for i, j in enumerate(order, start=1):
-            rec[f"driver_{i}_feature"] = features[j]
-            rec[f"driver_{i}_shap"] = round(float(contrib[j]), 3)
+        for rank, j in enumerate(order, start=1):
+            feature = features[j]
+            raw_value = latest.loc[row_idx, feature] if feature in latest.columns else None
+            rec[f"driver_{rank}_feature"] = feature
+            rec[f"driver_{rank}_shap"] = round(float(contrib[j]), 3)
+            db_rows.append({
+                "uid": uid,
+                "report_month": report_month,
+                "driver_rank": rank,
+                "feature": feature,
+                "shap_value": round(float(contrib[j]), 3),
+                "feature_value": None if pd.isna(raw_value) else str(raw_value),
+            })
         rows.append(rec)
 
     sample_out = pd.DataFrame(rows)
@@ -153,6 +167,12 @@ def main():
 
     top50_out = sample_out.nlargest(50, "risk_score")
     top50_out.to_csv(os.path.join(args.outdir, "shap_top50.csv"), index=False)
+
+    with SessionLocal() as session:
+        session.query(models.RiskDriver).delete()
+        session.bulk_insert_mappings(models.RiskDriver, db_rows)
+        session.commit()
+    print(f"Wrote {len(db_rows)} driver rows to risk_drivers (Postgres)")
 
     print(f"\nSaved shap_global.csv ({len(glob)} features), "
           f"shap_sample.csv ({len(sample_out)} projects), and "
