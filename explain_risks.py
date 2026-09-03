@@ -6,15 +6,21 @@ Answers: "which CUF fields drive the model's predictions, and by how much?"
 
 Usage:
     python explain_risks.py --panel model_data/panel.csv --models model_data/ \
-        --risk-scores model_data/risk_scores.csv --outdir model_data/
+        --outdir model_data/
+
+Note: risk scores/tiers are read live from Postgres (the risk_scores table,
+written by score_projects.py), not from a CSV — score_projects.py no longer
+writes risk_scores.csv, so a stale CSV path here would silently drift out of
+sync with the database.
 
 Note on scope: HistGradientBoostingClassifier trains its categorical features on
 raw string values, which SHAP's TreeExplainer can't consume directly (it forces a
 float numpy conversion). We work around this with a model-agnostic Explainer
 (ordinal-coded categoricals fed through a wrapper that decodes them back to the
 original strings before calling predict_proba) — correct, but ~3s/row per model,
-so "global" importance is computed on a representative sample (the top-50 riskiest
-projects + a random sample of the rest), not the full panel, to keep runtime sane.
+so "global" importance is computed on a representative sample (every Amber/Red
+project, since the Watchlist needs a driver for each of those, plus a random
+sample of Green projects), not the full panel, to keep runtime sane.
 """
 
 import argparse
@@ -75,12 +81,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--panel", default="model_data/panel.csv")
     ap.add_argument("--models", default="model_data/")
-    ap.add_argument("--risk-scores", default="model_data/risk_scores.csv")
     ap.add_argument("--outdir", default="model_data/")
     args = ap.parse_args()
 
     panel = pd.read_csv(args.panel, low_memory=False)
-    risk = pd.read_csv(args.risk_scores, dtype={"uid": str})
+    with SessionLocal() as session:
+        risk_rows = (
+            session.query(
+                models.RiskScore.uid,
+                models.RiskScore.risk_score,
+                models.RiskScore.risk_tier,
+                models.Project.project_name,
+            )
+            .join(models.Project, models.Project.uid == models.RiskScore.uid)
+            .all()
+        )
+    risk = pd.DataFrame(risk_rows, columns=["uid", "risk_score", "risk_tier", "project_name"])
+    risk["uid"] = risk["uid"].astype(str)
     time_bundle = load_bundle(args.models, "model1_slippage_clf")
     cost_bundle = load_bundle(args.models, "model2_cost_clf")
 
@@ -92,15 +109,18 @@ def main():
     Xnum, inv = ordinal_encode(X, time_bundle["categorical"])
     Xnum.attrs["inv"] = inv
 
-    top50 = risk.nlargest(50, "risk_score")
-    top50_idx = latest.index[latest.uid.isin(top50.uid)]
+    # Every Amber/Red project needs a driver row -- the Watchlist endpoint shows one
+    # for every amber/red card, not just a 200-row sample. Green projects only need
+    # a smaller random sample, kept for shap_global.csv / cluster_archetypes.py.
+    amber_red_uids = risk.loc[risk["risk_tier"].isin(["Amber", "Red"]), "uid"]
+    amber_red_idx = latest.index[latest.uid.isin(amber_red_uids)]
     rng = np.random.default_rng(0)
-    remaining = latest.index.difference(top50_idx)
+    remaining = latest.index.difference(amber_red_idx)
     extra_idx = rng.choice(remaining, size=min(SAMPLE_SIZE, len(remaining)), replace=False)
-    sample_idx = pd.Index(top50_idx).union(extra_idx)
+    sample_idx = pd.Index(amber_red_idx).union(extra_idx)
 
     print(f"Computing SHAP for {len(sample_idx)} projects "
-          f"({len(top50_idx)} top-risk + {len(extra_idx)} sampled) x 2 models...")
+          f"({len(amber_red_idx)} amber/red + {len(extra_idx)} sampled green) x 2 models...")
 
     shap_time = shap_values_for(time_bundle["model"], Xnum, time_bundle["categorical"], sample_idx)
     shap_cost = shap_values_for(cost_bundle["model"], Xnum, cost_bundle["categorical"], sample_idx)
