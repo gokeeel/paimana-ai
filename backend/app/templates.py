@@ -5,8 +5,18 @@ a raw feature name or SHAP value directly."""
 
 TIER_TO_STATUS = {"Green": "On Track", "Amber": "Needs Attention", "Red": "Critical"}
 
+def _elapsed_ratio_sentence(v):
+    if v < 0:
+        return None
+    if v > 1.5:
+        return f"The project has taken {v:.1f}x its planned duration."
+    if v > 1.0:
+        return f"The project is {(v - 1) * 100:.0f}% over its planned schedule."
+    return f"The project has used up {v * 100:.0f}% of its planned schedule."
+
+
 NUMERIC_TEMPLATES = {
-    "elapsed_ratio": lambda v: f"The project has used up {v * 100:.0f}% of its planned schedule.",
+    "elapsed_ratio": _elapsed_ratio_sentence,
     "doc_slip_to_date_m": lambda v: (
         f"The completion date has already slipped by {v:.0f} months."
         if v >= 0
@@ -27,11 +37,17 @@ NUMERIC_TEMPLATES = {
     "financial_progress_pct": lambda v: f"{v:.0f}% of the sanctioned budget has been spent.",
     "d_physical_progress": lambda v: f"Physical progress changed by {v:+.1f} points since last month.",
     "progress_velocity_3m": lambda v: (
-        f"Progress has been trending {'downward' if v < 0 else 'upward'} over the last 3 months."
+        "Progress has been flat over the last 3 months."
+        if v == 0
+        else f"Progress has been trending {'downward' if v < 0 else 'upward'} over the last 3 months."
     ),
-    "orig_duration_m": lambda v: f"The project's original planned duration was {v:.0f} months.",
+    "orig_duration_m": lambda v: (
+        f"The project's original planned duration was {v:.0f} months." if v >= 0 else None
+    ),
     "approval_to_start_lag_m": lambda v: (
         f"There was a {v:.0f}-month gap between approval and the actual start."
+        if v >= 0
+        else f"The project started {abs(v):.0f} months before formal approval was recorded."
     ),
 }
 
