@@ -544,7 +544,13 @@ PROJECT_COLS = ["uid", "project_name", "agency", "ministry", "sector", "state",
 
 
 def upsert_projects(session, df):
-    subset = df[PROJECT_COLS].drop_duplicates("uid")
+    # keep="last" after sorting by report_month: a handful of uids have a null
+    # project_name in their earliest month only; preferring the latest available
+    # row picks up the real name where one exists anywhere in the panel.
+    subset = df.sort_values("report_month").drop_duplicates("uid", keep="last")[PROJECT_COLS]
+    subset["project_name"] = subset["project_name"].fillna(subset["uid"])  # a
+    # handful of uids never have a name in ANY month — fall back to the uid
+    # itself so the NOT NULL constraint on project_name is always satisfiable.
     rows = subset.where(pd.notna(subset), None).to_dict("records")
     if not rows:
         return
@@ -586,7 +592,10 @@ Change it to:
     os.makedirs(args.outdir, exist_ok=True)
 
     with SessionLocal() as session:
-        upsert_projects(session, result)
+        upsert_projects(session, scored_all)  # full panel, not `result` (latest
+        # month only) — risk_history below writes rows for every uid across every
+        # historical month, and those rows FK to projects.uid, so projects must be
+        # an all-time registry, not just the latest snapshot.
         write_risk_scores(session, result)
         session.commit()
     print(f"Wrote {len(result)} rows to risk_scores (Postgres)")
@@ -623,9 +632,14 @@ and `Wrote N rows to risk_history (Postgres)`, no traceback.
 - [ ] **Step 4: Verify the data actually landed**
 
 Run: `"D:/POSTGRESQL/bin/psql.exe" -U postgres -h localhost -p 5433 -d paimana -c "SELECT count(*) FROM projects; SELECT count(*) FROM risk_scores; SELECT count(*) FROM risk_history;"`
-Expected: `projects` and `risk_scores` counts match the total project count
-printed by the script; `risk_history` count matches total panel rows
-scored across all months.
+Expected: `risk_scores` count matches the latest-month project count printed
+by the script; `risk_history` count matches total panel rows scored across
+all months; `projects` count is >= `risk_scores`' count, not necessarily
+equal — `projects` must cover every uid that ever appears in any month
+(an all-time registry), since `risk_history` rows for historical/dropped
+projects have a foreign key to `projects.uid` that would otherwise fail.
+`upsert_projects` is called with the full multi-month `scored_all`
+dataframe, not `result` (latest month only), for exactly this reason.
 
 - [ ] **Step 5: Commit**
 
