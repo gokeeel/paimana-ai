@@ -544,7 +544,8 @@ PROJECT_COLS = ["uid", "project_name", "agency", "ministry", "sector", "state",
 
 
 def upsert_projects(session, df):
-    rows = df[PROJECT_COLS].drop_duplicates("uid").where(pd.notna(df[PROJECT_COLS]), None).to_dict("records")
+    subset = df[PROJECT_COLS].drop_duplicates("uid")
+    rows = subset.where(pd.notna(subset), None).to_dict("records")
     if not rows:
         return
     stmt = pg_insert(models.Project.__table__).values(rows)
