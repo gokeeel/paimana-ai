@@ -14,13 +14,55 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from feature_labels import build_X
+from ml.db import SessionLocal
+from backend.app import models
 
 MODEL_NAMES = [
     "model1_slippage_clf", "model1_slippage_reg",
     "model2_cost_clf", "model2_cost_q50", "model2_cost_q90",
 ]
+
+PROJECT_COLS = ["uid", "project_name", "agency", "ministry", "sector", "state",
+                "original_cost", "latest_cost"]
+
+
+def upsert_projects(session, df):
+    # Sort by report_month first and keep the *last* occurrence per uid: some
+    # early panel snapshots have a null project_name that gets filled in by a
+    # later month for the same uid (real data-quality artifact in the source
+    # CSV, not something the brief's original drop_duplicates("uid") -- which
+    # keeps the *first* row -- accounted for). A couple of uids never get a
+    # name in any month; fall back to the uid itself so the NOT NULL
+    # constraint on projects.project_name is satisfied.
+    subset = df.sort_values("report_month")[PROJECT_COLS].drop_duplicates("uid", keep="last")
+    subset["project_name"] = subset["project_name"].fillna(subset["uid"])
+    rows = subset.where(pd.notna(subset), None).to_dict("records")
+    if not rows:
+        return
+    stmt = pg_insert(models.Project.__table__).values(rows)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["uid"],
+        set_={c: stmt.excluded[c] for c in PROJECT_COLS if c != "uid"},
+    )
+    session.execute(stmt)
+
+
+def write_risk_scores(session, df):
+    session.query(models.RiskScore).delete()
+    cols = ["uid", "report_month", "physical_progress", "slip_prob", "cost_prob",
+            "risk_score", "risk_tier", "alert_type", "risk_score_delta"]
+    rows = df[cols].where(pd.notna(df[cols]), None).to_dict("records")
+    session.bulk_insert_mappings(models.RiskScore, rows)
+
+
+def write_risk_history(session, df):
+    session.query(models.RiskHistory).delete()
+    cols = ["uid", "report_month", "risk_score", "risk_tier"]
+    rows = df[cols].where(pd.notna(df[cols]), None).to_dict("records")
+    session.bulk_insert_mappings(models.RiskHistory, rows)
 
 
 def load_models(models_dir):
@@ -114,7 +156,16 @@ def main():
     result = latest[cols]
 
     os.makedirs(args.outdir, exist_ok=True)
-    result.to_csv(os.path.join(args.outdir, "risk_scores.csv"), index=False)
+
+    with SessionLocal() as session:
+        # Use scored_all (every uid across every panel month), not just the
+        # latest-month `result` slice: risk_history below carries uids from
+        # earlier months too, and its FK to projects.uid needs all of them
+        # present, not only the ones still active in the latest snapshot.
+        upsert_projects(session, scored_all)
+        write_risk_scores(session, result)
+        session.commit()
+    print(f"Wrote {len(result)} rows to risk_scores (Postgres)")
 
     tiers = result["risk_tier"].value_counts()
     summary = {
@@ -149,9 +200,11 @@ def main():
         print(f"  {row['risk_score']:6.1f}  {row['project_name'][:70]}")
     print(f"\nSaved risk_scores.csv ({len(result)} rows) and risk_summary.json to {args.outdir}")
 
-    hist = scored_all[["uid", "project_name", "report_month", "risk_score", "risk_tier"]]
-    hist.to_csv(os.path.join(args.outdir, "risk_history.csv"), index=False)
-    print(f"Saved risk_history.csv ({len(hist)} rows) to {args.outdir}")
+    hist = scored_all[["uid", "report_month", "risk_score", "risk_tier"]]
+    with SessionLocal() as session:
+        write_risk_history(session, hist)
+        session.commit()
+    print(f"Wrote {len(hist)} rows to risk_history (Postgres)")
 
 
 if __name__ == "__main__":
