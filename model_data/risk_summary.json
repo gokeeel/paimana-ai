@@ -2,11 +2,11 @@
   "report_month": "2026-07",
   "total_projects": 1775,
   "red": 459,
-  "amber": 650,
-  "green": 666,
+  "amber": 648,
+  "green": 668,
   "alerts": {
-    "rapidly_deteriorating": 47,
-    "newly_at_risk": 38,
+    "rapidly_deteriorating": 46,
+    "newly_at_risk": 37,
     "stalled_and_overdue": 53
   },
   "top_10_riskiest": [
