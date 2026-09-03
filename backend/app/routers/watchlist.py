@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
 
 
 @router.get("", response_model=list[schemas.WatchlistItem])
-def get_watchlist(tier: str = Query("amber,red"), db: Session = Depends(get_db)):
+def get_watchlist(tier: str = Query("amber,red"), limit: int = Query(100, ge=1, le=1000), db: Session = Depends(get_db)):
     tiers = [t.strip().capitalize() for t in tier.split(",")]
     latest_month = db.query(func.max(models.RiskScore.report_month)).scalar() or ""
     rows = (
@@ -18,16 +18,24 @@ def get_watchlist(tier: str = Query("amber,red"), db: Session = Depends(get_db))
         .join(models.Project, models.Project.uid == models.RiskScore.uid)
         .filter(models.RiskScore.report_month == latest_month, models.RiskScore.risk_tier.in_(tiers))
         .order_by(models.RiskScore.risk_score.desc())
+        .limit(limit)
         .all()
     )
+    uids = [project.uid for _, project in rows]
+    drivers = (
+        db.query(models.RiskDriver)
+        .filter(
+            models.RiskDriver.uid.in_(uids),
+            models.RiskDriver.report_month == latest_month,
+            models.RiskDriver.driver_rank == 1,
+        )
+        .all()
+    )
+    driver_by_uid = {d.uid: d for d in drivers}
+
     items = []
     for score, project in rows:
-        driver = (
-            db.query(models.RiskDriver)
-            .filter(models.RiskDriver.uid == project.uid, models.RiskDriver.report_month == latest_month)
-            .order_by(models.RiskDriver.driver_rank)
-            .first()
-        )
+        driver = driver_by_uid.get(project.uid)
         reason = driver_to_sentence(driver.feature, driver.feature_value) if driver else None
         items.append(schemas.WatchlistItem(
             uid=project.uid,
