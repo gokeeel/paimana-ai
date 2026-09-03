@@ -20,8 +20,13 @@ slice of.
 
 ## Decisions locked in this session
 
-- **Local Postgres via Docker Desktop** (`docker-compose up`), not a native
-  Windows install — reproducible, easy to reset while iterating on schema.
+- **Local Postgres via native Windows install** (Docker Desktop was ruled
+  out — insufficient disk space on the laptop). PostgreSQL 18 is installed
+  at `D:\POSTGRESQL`, running as a Windows service on **port 5433** (not the
+  default 5432 — a stray, unrelated PostgreSQL 17 service already owns 5432
+  on this machine). Database name: `paimana`. Connection string lives in a
+  gitignored `.env` at the repo root as `DATABASE_URL`, read by both
+  `ml/db.py` and `backend/app/main.py` — never hardcoded, never committed.
 - **Stub auth**: a seeded `users` row, no login screen yet. Action Log (phase
   2) still attributes actions to a real `officer_id`. Real JWT login is a
   later addition once real officers need separate accounts.
@@ -50,7 +55,7 @@ slice of.
 
 ```
 paimana-extractor/
-  docker-compose.yml          # Postgres service only, for now
+  .env                        # gitignored — DATABASE_URL, not committed
   extraction/
     app.py
     batch_all.py
